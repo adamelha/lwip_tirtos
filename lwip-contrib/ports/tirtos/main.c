@@ -56,31 +56,26 @@
 
 #define SLIP_ADDRS &ipaddr_slip, &netmask_slip, &gw_slip,
 
-#define MAX_COMMAND_LENGTH	5// Including null terminator
+#define MAX_COMMAND_LENGTH	10 // Including null terminator
 #define MAX_RETURN_LENGTH	25// Size of buffer of max number of bytes returned from device
 
 #define RESP_PREFIX	"Device Response: "
-
-#if LWIP_UDP
 
 static struct udp_pcb *udpecho_raw_pcb;
 char retBuf[MAX_RETURN_LENGTH];
 
 char retError[] = "API Error!";
-
+char respPrefix[] = RESP_PREFIX;
 
 // Macros for convenience
 #define ZERO_OUT_RET_BUFS() \
 	memset(retBuf, 0, sizeof(retBuf));
 
 
-#define UPDATE_PAYLOAD(pbuf, retBuf) \
-		mem_free(pbuf->payload); \
-		pbuf->tot_len += (strlen(retBuf) + 1 - pbuf->len); \
-		pbuf->payload = mem_malloc(strlen(retBuf) + 1); \
-		pbuf->len = strlen(retBuf) + 1; \
-		memcpy(pbuf->payload, retBuf, strlen(retBuf) + 1)
-
+#define ALLOCATE_CREATE_PBUF(pbuf, bufSrc) \
+		pbuf = pbuf_alloc(PBUF_TRANSPORT, sizeof(respPrefix) + strlen(bufSrc) , PBUF_RAM); \
+		memcpy(pbuf->payload, respPrefix , sizeof(respPrefix) - 1); \
+		memcpy(&(pbuf->payload[sizeof(respPrefix) - 1]), bufSrc, strlen(bufSrc) + 1)
 
 /*
  * Commands for device.
@@ -121,16 +116,19 @@ udpecho_raw_recv_cb_batmon(void *arg, struct udp_pcb *upcb, struct pbuf *p,
                  const ip_addr_t *addr, u16_t port)
 {
   LWIP_UNUSED_ARG(arg);
-  char command[10];
+  char command[MAX_COMMAND_LENGTH];
   int32_t tempr;
   float volt;
+
+  struct pbuf *pbufResp;
+
 
   ZERO_OUT_RET_BUFS();
 
   if (p != NULL) {
 	  if(p->len >= MAX_COMMAND_LENGTH) {
-	  		// Send null character back to sender
-		  UPDATE_PAYLOAD(p, retError);
+	  	  // Send Error message
+		  ALLOCATE_CREATE_PBUF(pbufResp, retError);
 	  }
 	  else {
 
@@ -143,29 +141,28 @@ udpecho_raw_recv_cb_batmon(void *arg, struct udp_pcb *upcb, struct pbuf *p,
 	  		// If Temp command
 	  		if(strcmp(command, CMD_GET_TEMP) == 0) {
 	  			tempr = get_tempr();
-	  			System_sprintf(retBuf, RESP_PREFIX "%d", tempr);
-	  			UPDATE_PAYLOAD(p, retBuf);
+	  			System_sprintf(retBuf, "%d", tempr);
+	  			ALLOCATE_CREATE_PBUF(pbufResp, retBuf);
 	  		}
 
 	  		// If Bat command
 	  		else if(strcmp(command, CMD_GET_BETTERY) == 0){
 	  			volt = getVoltage();
-	  			System_sprintf(retBuf, RESP_PREFIX "%f", volt);
-	  			UPDATE_PAYLOAD(p, retBuf);
+	  			System_sprintf(retBuf, "%f", volt);
+	  			ALLOCATE_CREATE_PBUF(pbufResp, retBuf);
 	  		}
 	  		else {
-	  			// Send null character back to sender
-	  			UPDATE_PAYLOAD(p, retError);
+	  			// Send Error message
+	  			ALLOCATE_CREATE_PBUF(pbufResp, retError);
 	  		}
 	  	}
+
     /* send received packet back to sender */
+    udp_sendto(upcb, pbufResp, addr, port);
 
-
-    udp_sendto(upcb, p, addr, port);
-
-    /* free the pbuf */
+    /* free the pbufs */
     pbuf_free(p);
-
+    pbuf_free(pbufResp);
   }
 }
 
@@ -186,8 +183,6 @@ udpecho_raw_init_batmon(void)
     /* abort? output diagnostic? */
   }
 }
-
-#endif /* LWIP_UDP */
 
 int
 start_slip()
