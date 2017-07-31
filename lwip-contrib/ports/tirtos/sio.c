@@ -13,6 +13,7 @@
 #include "lwip/sys.h"
 
 #define UART_BAUD_RATE	115200
+
 static UART_Handle hUart = NULL;
 static UART_Params uartParams;
 

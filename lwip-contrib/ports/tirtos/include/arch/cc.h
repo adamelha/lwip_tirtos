@@ -58,12 +58,23 @@
 #include <xdc/runtime/System.h>
 #include <ti/sysbios/BIOS.h>
 
-//#define LWIP_DBG_TYPES_ON
-//#define LWIP_DEBUG	1
-/* Print message. Maybe should use uart printf? */
-#define LWIP_PLATFORM_DIAG(x) { System_printf x; /*System_flush();*/}
+/*
+ * If LWIP_DEBUG_WITH_FLUSH is defined to 1, every debug print will immediately be displayed in ROV.
+ * This is not recommended since it slows execution significantly. Although can Help debugging a bit.
+ *
+ * If LWIP_DEBUG_WITH_FLUSH is 0, user must use System_flush() to flush debug buffer.
+ */
+#define LWIP_DEBUG_WITH_FLUSH	0
+
+/* Print debug message */
+#if LWIP_DEBUG_WITH_FLUSH
+#define LWIP_PLATFORM_DIAG(x) { System_printf x; System_flush();}
+#else
+#define LWIP_PLATFORM_DIAG(x) { System_printf x; }
+#endif
+
 /* Print message and abandon execution.  */
-#define LWIP_PLATFORM_ASSERT(x) System_printf(x); BIOS_exit(1)
+#define LWIP_PLATFORM_ASSERT(x) System_printf(x); System_flush(); BIOS_exit(1)
 
 /* SYS_LIGHTWEIGHT_PROT defaults to 0 in opt.h and sys.h provides empty default
  *  definitions for SYS_ARCH_DECL_PROTECT, SYS_ARCH_PROTECT and

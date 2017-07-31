@@ -37,10 +37,14 @@
 #include <ti/sysbios/knl/Task.h>
 #include <xdc/runtime/Error.h>
 
-//FIXME: maybe should actually be defined as _MBOX_SIZE in lwipopts.h instead of this
+/* Maximum message buffer for mailboxes */
 #define MAX_MAILBOX_MESSAGE_SIZE	1024
 
+/* Maximum size of a name for a thread */
 #define MAX_THREAD_NAME_SIZE		100
+
+/* Defining this will treat every clock tick as a millisecond.
+ * This is instead of calling bios API BIOS_getCpuFreq which is not thread safe and will require additional locking */
 #define DEFAULT_1MS_CLOCK_TICK
 
 #define SYS_MBOX_NULL NULL

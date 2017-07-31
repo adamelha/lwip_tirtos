@@ -428,7 +428,7 @@
 #define SLIPIF_THREAD_PRIO              4
 
 #define SLIP_USE_RX_THREAD				1
-//#define SLIP_USE_RX_THREAD				0
+
 #define	USE_SLIPIF						1
 
 /*
@@ -441,7 +441,7 @@
 #define TUNIF_DEBUG      LWIP_DBG_OFF
 #define UNIXIF_DEBUG     LWIP_DBG_OFF
 #define DELIF_DEBUG      LWIP_DBG_OFF
-#define SIO_FIFO_DEBUG   LWIP_DBG_ON
+#define SIO_FIFO_DEBUG   LWIP_DBG_OFF
 #define TCPDUMP_DEBUG    LWIP_DBG_OFF
 #define API_LIB_DEBUG    LWIP_DBG_OFF
 #define API_MSG_DEBUG    LWIP_DBG_OFF
@@ -452,10 +452,10 @@
 #define IP_DEBUG         LWIP_DBG_ON
 #define IP_REASS_DEBUG   LWIP_DBG_OFF
 #define RAW_DEBUG        LWIP_DBG_OFF
-#define ICMP_DEBUG       LWIP_DBG_ON
+#define ICMP_DEBUG       LWIP_DBG_OFF
 #define UDP_DEBUG        LWIP_DBG_ON
 #define TCP_DEBUG        LWIP_DBG_OFF
-#define TCP_INPUT_DEBUG  LWIP_DBG_ON
+#define TCP_INPUT_DEBUG  LWIP_DBG_OFF
 #define TCP_OUTPUT_DEBUG LWIP_DBG_ON
 #define TCP_RTO_DEBUG    LWIP_DBG_OFF
 #define TCP_CWND_DEBUG   LWIP_DBG_OFF

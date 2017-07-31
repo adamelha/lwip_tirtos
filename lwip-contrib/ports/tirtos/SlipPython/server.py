@@ -9,8 +9,6 @@ from scapy.all import *
 DEVICE_IP = "192.168.1.17"
 DEVICE_PORT = 10000
 
-COMMAND = "TE"
-
 ser = None
 class slip():
     def __init__(self):
@@ -63,7 +61,7 @@ class slip():
                 else:
                     self.packet += char
                     self.started = True
-        #self.stream = '' // FIXME: should not be commented
+        self.stream = '' #// FIXME: should not be commented
         self.started = False
         return (packetlist)
 
@@ -84,59 +82,49 @@ class slip():
         encoded += self.SLIP_END
         return (encoded)
 
-
-#WARNING: Scapy has detected that your pcap service is not running !
-#Do you want to start it ? (yes/no) [y]: yes
-
-#maybe should start pcap service somehow
-# check out https://github.com/guedou/scapy-issues/blob/master/scapy/arch/windows/__init__.py
-
-# import imp
-# Slip = imp.load_source('slip', 'C:\\IoT\\lwip\\main\\lwip-contrib\\ports\\tirtos\\SlipLib\\slip\\slip.py'); Slip.main()
-
 slip_obj = None
 
 # Reads serial line to receive answer from device and sends to client
+
 def receive_from_device():
     global ser
     received = ''
     while True:
         slip_read = slip()
-        received += ser.read()
+        received += ser.read(1)
 
         slip_read.append(received)
         response = slip_read.decode()
         if (len(response) > 0):
             ip_packet = IP(response[len(response) - 1])
+
+            # Reset decoder
+            slip_read.stream = ''
+            received = ''
             if ip_packet is not None:
-                if 'Raw' in ip_packet:
-                    print 'raw payload (answer from device): {}'.format(ip_packet[Raw].load)
+                if (ip_packet[IP].sport == 10000):
+                    send(ip_packet)
 
-
-
-                    #clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    #clientSocket.connect((ip_packet[IP].dst, ip_packet[UDP].dport))
-                    #clientSocket.send(bytes(ip_packet[Raw].load))
-
-                    # Send response packet from device to the client
-                    if (ip_packet[IP].sport == 10000):
-                        send(ip_packet)
 
 def process_packet_from_client(pkt):
     global ser
     if IP in pkt:
         print 'Received IP packet from client:'
         pkt[IP].show()
-        slip_obj = slip()
-        slip_packet = slip_obj.encode(str(pkt[IP]))
-        print "slip packet to be sent to Device: {}".format(slip_packet)
 
-        ser.write(slip_packet)
+        # Send only packets that have UDP header to device.
+        # Not necessary but makes it easier on device
+        if 'UDP' in pkt:
+            slip_obj = slip()
+            slip_packet = slip_obj.encode(str(pkt[IP]))
+            print "slip packet to be sent to Device: {}".format(slip_packet)
+
+            ser.write(slip_packet)
 
 # sniffs packets from clients and forward to device
 def sniff_from_client():
     global DEVICE_IP, DEVICE_PORT, ser
-    a = sniff(filter="host {}".format(DEVICE_IP), prn=process_packet_from_client, count=12, timeout=60)
+    a = sniff(filter="host {}".format(DEVICE_IP), prn=process_packet_from_client, timeout=60)
 
 def main():
     global slip_obj, DEVICE_IP, DEVICE_PORT, COMMAND, ser
