@@ -38,7 +38,7 @@
 #include <xdc/runtime/Error.h>
 
 /* Maximum message buffer for mailboxes */
-#define MAX_MAILBOX_MESSAGE_SIZE	1024
+#define MAX_MAILBOX_MESSAGE_SIZE	64
 
 /* Maximum size of a name for a thread */
 #define MAX_THREAD_NAME_SIZE		100
@@ -77,6 +77,8 @@ void sys_mutex_set_invalid(sys_mutex_t *mutex);
 struct sys_mbox {
   void *msg[MAX_MAILBOX_MESSAGE_SIZE];
   Mailbox_Handle mboxHandle;
+  Mailbox_Params mboxParams;
+  Error_Block eb;
 };
 typedef struct sys_mbox		sys_mbox_t;
 

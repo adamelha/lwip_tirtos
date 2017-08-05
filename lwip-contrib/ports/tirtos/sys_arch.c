@@ -66,6 +66,10 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
 	updatedTimeout = (timeout == 0) ? BIOS_WAIT_FOREVER: timeout;
 	int stat;
 	ticksStart = Clock_getTicks();
+
+	if(timeout == 1) {
+		updatedTimeout = BIOS_NO_WAIT;
+	}
 	stat = Semaphore_pend(sem->semHandle, updatedTimeout);
 	if(!stat)
 	{
@@ -130,7 +134,7 @@ void sys_mutex_set_invalid(sys_mutex_t *mutex)
 
 err_t sys_mbox_new(sys_mbox_t *mbox, int size)
 {
-	mbox->mboxHandle = Mailbox_create(MAX_MAILBOX_MESSAGE_SIZE, size, NULL, NULL);
+	mbox->mboxHandle = Mailbox_create(MAX_MAILBOX_MESSAGE_SIZE, size, &(mbox->mboxParams), &(mbox->eb));
 	return (mbox->mboxHandle) ? ERR_OK : ERR_MEM;
 }
 

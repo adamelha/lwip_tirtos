@@ -184,12 +184,14 @@ udpecho_raw_init_batmon(void)
   }
 }
 
+ip4_addr_t ipaddr_slip, netmask_slip, gw_slip;
+u8_t num_slip = 0;
+struct netif slipif;
+
 int
 start_slip()
 {
-	ip4_addr_t ipaddr_slip, netmask_slip, gw_slip;
-	u8_t num_slip = 0;
-	struct netif slipif;
+	
 
 	lwip_init();
 
